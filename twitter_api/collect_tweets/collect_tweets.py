@@ -1,211 +1,234 @@
-# !/usr/bin/python
-# -*- coding: utf-8 -*-
-# Use Python 2.7+
-# ALL STRINGS SHOULD BE HANDLED AS UTF-8!
-
-# import dateutil.parser
-import json
-from tweepy import *
+#!/usr/bin/python
 import tweepy
-import pytz
+from tweepy.streaming import StreamListener
+from tweepy import OAuthHandler
+from tweepy import Stream
 import re
 import sys
+import json
+import dateutil.parser
+from pytz import timezone
+import pytz
 
-#######
-# PARAMETERS END
-#######
+# The consumer keys can be found on your application's Details
+# page located at https://dev.twitter.com/apps (under "OAuth settings")
+CONSUMER_KEY = '2zqaRrlnTi7AQrk6gD1lqsoqo'
+CONSUMER_SECRET = 'EvGH0LPCjC7lyjt4uszT4s2lQmnd2om7rArDftYibtJ6yoRl8z'
 
-# Retrieve global trends.
-# Other localised trends can be specified by looking up WOE IDs:
-# http://developer.yahoo.com/geo/geoplanet/
-# Twitter API docs: https://dev.twitter.com/rest/reference/get/trends/place
-WORLD_WOE_ID = 1
-US_WOE_ID = 23424977
-UK_WOE_ID = 23424975
-TREDNS = []
+# The access tokens can be found on your applications's Details
+# page located at https://dev.twitter.com/apps (located
+# under "Your access token")
+ACCESS_TOKEN = '4415191522-OuA6gF4Zub4c0bTn4UwunHO2GSH8w1aYEdY9ZHf'
+ACCESS_TOKEN_SECRET = 'N1jVLY2szClSxJ0zIpkREThkuSWYiiY3ItNKxTN8MJydx'
 
-# Config Twitter API
 config = {}
 configPath = "/home/mike/Documents/repoo/information_diffusion/twitter_api/config/config.py"
 exec(open(configPath).read(), config)
-# execfile(configPath, config)
 
-# Go to http://dev.twitter.com/apps/new to create an app and get values
-# for these credentials, which you'll need to provide in place of these
-# empty string values that are defined as placeholders.
-# See https://dev.twitter.com/docs/auth/oauth for more information
-# on Twitter's OAuth implementation.
-# Create twitter API object
 auth = OAuthHandler(config["CONSUMER_KEY"], config["CONSUMER_SECRET"])
 auth.set_access_token(config["ACCESS_TOKEN"], config["ACCESS_TOKEN_SECRET"])
-api = tweepy.API(auth)
 
-# Time zone
-sgtz = pytz.timezone('US/Pacific')
+sgtz = timezone('Asia/Singapore')
 utc = pytz.timezone('UTC')
 
-#######
-# PARAMETERS END
-#######
-
+api = tweepy.API(auth)
 trendsAPI = api.trends_place(23424977)
 # trendsAPI is a list with only one element in it,
 # which is a dict which we'll put in data.
 dictTrends = trendsAPI[0]
 trends = dictTrends['trends']
 
-for iT in trends:
-    TREDNS = "%s" % iT['name']
-    print(TREDNS)
 
-reTrends = re.compile('|'.join(TREDNS).lower())
-reLexically = re.compile(r'([A-Z][A-Z]\d+)')
-reRetweets = re.compile(r'^RT\s')
+def get_hashtags(listOfTrends, order=False):
+    tags = set([item.strip("#.,-\"\'&*^!") for item in listOfTrends.split() if (item.startswith("#") and len(item) < 256)])
+    return sorted(tags) if order else tags
+
+def strip_links(text):
+    link_regex    = re.compile('((https?):((//)|(\\\\))+([\w\d:#@%/;$()~_?\+-=\\\.&](#!)?)*)', re.DOTALL)
+    links         = re.findall(link_regex, text)
+    for link in links:
+        text = text.replace(link[0], ', ')
+    return text
+
+def strip_all_entities(text):
+    entity_prefixes = ['@','#']
+    for separator in  string.punctuation:
+        if separator not in entity_prefixes :
+            text = text.replace(separator,' ')
+    words = []
+    for word in text.split():
+        word = word.strip()
+        if word:
+            if word[0] not in entity_prefixes:
+                words.append(word)
+    return ' '.join(words)
+
+STATIONS = [
+        'Admiralty MRT',
+        'Aljunied MRT',
+        'Ang Mo Kio MRT',
+        'Bartley MRT',
+        'Bayfront MRT',
+        'Bedok MRT',
+        'Bishan MRT',
+        'Bras Basah MRT',
+        'Botanic Gardens MRT',
+        'Braddell MRT',
+        'Bukit Batok MRT',
+        'Bukit Gombak MRT',
+        'Caldecott MRT',
+        'Choa Chu Kang MRT',
+        'Boon Keng MRT',
+        'Boon Lay MRT',
+        'Buangkok  MRT',
+        'Bugis MRT',
+        'Buona Vista MRT',
+        'Changi Airport MRT',
+        'Chinatown MRT',
+        'Clarke Quay MRT',
+        'Chinese Garden MRT',
+        'City Hall MRT',
+        'Clementi MRT',
+        'Commonwealth MRT',
+        'Dakota MRT',
+        'Dhoby Ghaut MRT',
+        'Dover MRT',
+        'Esplanade MRT',
+        'Eunos MRT',
+        'Expo MRT',
+        'Farrer Park MRT',
+        'Farrer Road MRT',
+        'HarbourFront MRT',
+        'Haw Par Villa MRT',
+        'Holland Village MRT',
+        'Hougang MRT',
+        'Joo Koon MRT',
+        'Jurong East MRT',
+        'Kallang MRT',
+        'Kovan MRT',
+        'Kembangan MRT',
+        'Kent Ridge MRT',
+        'Khatib MRT',
+        'Kranji MRT',
+        'Lakeside MRT',
+        'Labrador Park MRT',
+        'Lavender MRT',
+        'Little India MRT',
+        'Lorong Chuan MRT',
+        'Marina Bay MRT',
+        'Marsiling MRT',
+        'MacPherson MRT',
+        'Marymount MRT',
+        'Mountbatten MRT',
+        'Newton MRT',
+        'Nicoll Highway MRT',
+        'one-north MRT',
+        'Novena MRT',
+        'Orchard MRT',
+        'Outram Park MRT',
+        'Pasir Ris MRT',
+        'Pasir Panjang MRT',
+        'Paya Lebar MRT',
+        'Pioneer MRT',
+        'Potong Pasir MRT',
+        'Promenade MRT',
+        'Punggol MRT',
+        'Queenstown MRT',
+        'Raffles Place MRT',
+        'Redhill MRT',
+        'Sembawang MRT',
+        'Sengkang MRT',
+        'Serangoon MRT',
+        'Simei MRT',
+        'Somerset MRT',
+        'Stadium MRT',
+        'Tampines MRT',
+        'Tai Seng MRT',
+        'Tanah Merah MRT',
+        'Tanjong Pagar MRT',
+        'Tiong Bahru MRT',
+        'Telok Blangah MRT',
+        'Toa Payoh MRT',
+        'Woodlands MRT',
+        'Woodleigh MRT',
+        'Yew Tree MRT',
+        'Yio Chu Kang MRT',
+        'Yishun MRT'
+        ]
+regex = re.compile('|'.join(STATIONS).lower())
+linenum_re = re.compile(r'([A-Z][A-Z]\d+)')
+retweets_re = re.compile(r'^RT\s')
 
 enc = lambda x: x.encode('latin1', errors='ignore')
 
-
-class NewStreamListener(tweepy.StreamListener):
-    def __init__(self, api=None):
-        self.api = api or API()
-
-    def _run(self):
-        # Authenticate
-        url = "https://%s%s" % (self.host, self.url)
-
-        # Connect and process the stream
-        error_counter = 0
-        resp = None
-        exception = None
-        while self.running:
-            if self.retry_count is not None:
-                if error_counter > self.retry_count:
-                    # quit if error count greater than retry count
-                    break
-            try:
-                auth = self.auth.apply_auth()
-                resp = self.session.request(
-                    'POST',
-                    url,
-                    data=self.body,
-                    timeout=self.timeout,
-                    stream=True,
-                    auth=auth,
-                    verify=self.verify)
-                if resp.status_code != 200:
-                    if self.listener.on_error(resp.status_code) is False:
-                        break
-                    error_counter += 1
-                    if resp.status_code == 420:
-                        self.retry_time = max(self.retry_420_start,
-                                              self.retry_time)
-                    sleep(self.retry_time)
-                    self.retry_time = min(self.retry_time * 2,
-                                          self.retry_time_cap)
-                else:
-                    error_counter = 0
-                    self.retry_time = self.retry_time_start
-                    self.snooze_time = self.snooze_time_step
-                    self.listener.on_connect()
-                    self._read_loop(resp)
-            except (Timeout, ssl.SSLError) as exc:
-                # This is still necessary, as a SSLError can actually be
-                # thrown when using Requests
-                # If it's not time out treat it like any other exception
-                if isinstance(exc, ssl.SSLError):
-                    if not (exc.args and 'timed out' in str(exc.args[0])):
-                        exception = exc
-                        break
-                if self.listener.on_timeout() is False:
-                    break
-                if self.running is False:
-                    break
-                sleep(self.snooze_time)
-                self.snooze_time = min(
-                    self.snooze_time + self.snooze_time_step,
-                    self.snooze_time_cap)
-            except Exception as exc:
-                exception = exc
-                # any other exception is fatal, so kill loop
-                break
-
-        # cleanup
-        self.running = False
-        if resp:
-            resp.close()
-
-        self.new_session()
-
-        if exception:
-            # call a handler first so that the exception can be logged.
-            self.listener.on_exception(exception)
-            raise
-
-    def on_error(self, status):
-        print('status: %s' % status)
-        if status_code == 420:
-            # Returning False in on_data disconnects the stream
-            return False
-
+class StdOutListener(StreamListener):
     def on_data(self, data):
+
         tweet = json.loads(data)
 
-        if not tweet['user']:
-            print('No user data - ignoring tweet.')
+        if not tweet.has_key('user'):
+            print 'No user data - ignoring tweet.'
             return True
 
         user = enc(tweet['user']['name'])
         text = enc(tweet['text'])
 
-        # Ignore text that doesn't contain one of the keywords
-        matchesKeywords = re.search(reTrends, text.lower()).decode('utf-8')
-        if not matchesKeywords:
+        # ignore text that doesn't contain one of the keywords
+        matches = re.search(regex, text.lower())
+        if not matches:
             return True
 
         # ignore retweets
-        if re.search(reRetweets, text):
+        if re.search(retweets_re, text):
             return True
 
-        userLocation = enc(tweet['user']['location'])
+        location = enc(tweet['user']['location'])
         source = enc(tweet['source'])
-        createTime = dateutil.parser.parse(enc(tweet['created_at']))
+        d = dateutil.parser.parse(enc(tweet['created_at']))
 
         # localize time
-        timeZone = utc.normalize(createTime)
-        localTime = createTime.astimezone(sgtz)
-        tmstr = localTime.strftime("%Y%m%d-%H:%M:%S")
+        d_tz = utc.normalize(d)
+        localtime = d.astimezone(sgtz)
+        tmstr = localtime.strftime("%Y%m%d-%H:%M:%S")
 
         # append the hourly tweet file
         with open('tweets-%s.data' % tmstr.split(':')[0], 'a+') as f:
             f.write(data)
 
-        geoPoint = tweet['geo']
-        if geoPoint and geoPoint['type'] == 'Point':
-            # collect location
-            coordinatesPoint = geoPoint['coordinates']
-            line = re.search(reLexically, text)
-            if line:
-                with open('twitter_data.csv', 'a+') as mrtgeo:
-                    print("Found geo coords for (%s) '%s': (%f, %f)\n" %
-                          (line.group(), matchesKeywords.group(),
-                           coordinatesPoint[1], coordinatesPoint[0]))
+        # is this a geocoded tweet?
+        geo = tweet['geo']
+        if geo and geo['type'] == 'Point':
+            # collect location of mrt station
+            coords = geo['coordinates']
+            ln = re.search(linenum_re, text)
+            if ln:
+                with open('mrt_station_locations.csv', 'a+') as mrtgeo:
+                    print("Found geo coords for MRT Station (%s) '%s': (%f, %f)\n" %
+                            (ln.group(), matches.group(), coords[1], coords[0]))
                     mrtgeo.write("%f\t%f\t%s\t%s\n" %
-                                 (coordinatesPoint[1], coordinatesPoint[0],
-                                  matchesKeywords.group(), line.group()))
+                            (coords[1], coords[0], matches.group(), ln.group()))
 
-        # Print summary of tweet
-        print('%s\n%s\n%s\n%s\n%s\n\n ----------------\n' %
-              (user, userLocation, source, tmstr, text))
+        # print summary of tweet
+        print('%s\n%s\n%s\n%s\n%s\n\n ----------------\n' % (user, location, source, tmstr, text))
+
+
         return True
 
-
-def main():
-    print(api.me().name)
-    twitterListener = NewStreamListener()
-    stream = Stream(auth, twitterListener, timeout=60)
-    print("Listening to filter stream...")
-    stream.filter(track=TREDNS)
-
+    def on_error(self, status):
+        print('status: %s' % status)
 
 if __name__ == '__main__':
-    main()
+    l = StdOutListener()
+    auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
+    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+
+    stream = Stream(auth, l, timeout=60)
+
+    print("Listening to filter stream...")
+    for t in trends:
+        strip_all_entities(strip_links(t))
+
+    print(t)
+
+    print("\n".join(get_hashtags(trends, True)))
+    # stream.filter(track=TREDNS)
