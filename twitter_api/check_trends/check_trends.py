@@ -21,23 +21,19 @@ WORLD_WOE_ID = 1
 US_WOE_ID = 23424977
 UK_WOE_ID = 23424975
 
-def get_hashtags(text, order=False):
+def getHashtags(text, order=False):
     tags = set([item.strip("#.,-\"\'&*^!") for item in text.split() if (item.startswith("#") and len(item) < 256)])
     return sorted(tags) if order else tags
 
 def main():
 
-    res = []
     resTrends = twitter.trends.place(_id=US_WOE_ID)
+
     for location in resTrends:
         for trend in location["trends"]:
-            res.append("%s" % trend["name"])
-            print res
-            #with open('tweets_trends.data', 'a') as f:
-            #    f.write(res)
-
-    print(get_hashtags(res))
-
+            #res.append("%s" % trend["name"])
+            result = getHashtags(trend["name"])
+            print result
 
 if __name__ == '__main__':
     main()
