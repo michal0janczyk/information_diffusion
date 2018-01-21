@@ -84,7 +84,7 @@ def tweet_features(tweet_data):
 read3lines = lambda x: [ x.readline().strip(), x.readline().strip(), x.readline() ]
 
 data = []
-with open('/home/mike/Documents/Data sets/#electionUSA/election2016-20160101-20170125--------fullExport--.csv') as f:
+with open('/home/mike/Documents/Data sets/#sentiment/twitter-sentiment-classifier/tweets.csv') as f:
     tweet, label, newline = read3lines(f)
 
     while len(tweet) > 0:
@@ -111,7 +111,7 @@ classifier = nltk.NaiveBayesClassifier
 # train classifier using training set
 classifier = nltk.NaiveBayesClassifier.train(train_set)
 
-classifier.show_most_informative_features(20)
+#classifier.show_most_informative_features(20)
 
 # collect tweets that were wrongly classified
 errors = []

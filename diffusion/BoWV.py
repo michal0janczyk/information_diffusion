@@ -1,17 +1,25 @@
-from data_handler import getData
 import argparse
+import sys
 import numpy as np
-from sklearn.model_selection import cross_val_score
+import pdb
+from sklearn.metrics import make_scorer, f1_score, accuracy_score, recall_score, precision_score, classification_report, precision_recall_fscore_support
+from sklearn.ensemble  import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.model_selection import cross_val_score, cross_val_predict, cross_validate
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import make_scorer, f1_score, accuracy_score, recall_score, precision_score, classification_report, precision_recall_fscore_support
+from sklearn.utils import shuffle
 from sklearn.ensemble  import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.svm import SVC, LinearSVC
+from sklearn.model_selection import KFold
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils import shuffle
-import gensim
+import codecs
+import operator
+import gensim, sklearn
 from collections import defaultdict
+from batch_gen import batch_gen
 from my_tokenizer import glove_tokenize
 from nltk.tokenize import TweetTokenizer
-
-
 ### Preparing the text data
 texts = []  # list of text samples
 labels_index = {}  # dictionary mapping label name to numeric id
@@ -19,11 +27,11 @@ labels = []  # list of label ids
 
 
 # logistic, gradient_boosting, random_forest, svm_linear, svm_rbf
-GLOVE_MODEL_FILE = None
+GLOVE_MODEL_FILE = "/home/mike/Desktop/glove.twitter.27B.200d.txt"
 EMBEDDING_DIM = None
 MODEL_TYPE = None
 CLASS_WEIGHT = None
-N_ESTIMATORS = None
+N_ESTIMATORS = 5
 LOSS_FUN = None
 KERNEL = None
 TOKENIZER = None
@@ -40,6 +48,18 @@ tweets = {}
 
 word2vec_model = None
 
+def getData():
+    read3lines = lambda x: [x.readline().strip(), x.readline().strip(), x.readline()]
+
+    data = []
+    with open( '/home/mike/Documents/Data sets/#sentiment/twitter-sentiment-classifier/tweets.csv' ) as f:
+        tweet, label, newline = read3lines( f )
+
+        while len( tweet ) > 0:
+            data.append( {'tweet': tweet, 'label': label} )
+            tweet, label, newline = read3lines( f )
+
+    return tweets
 
 def select_tweets_whose_embedding_exists():
     # selects the tweets as in mean_glove_embedding method
@@ -107,13 +127,13 @@ def classification_model(X, Y, model_type=None):
     print "Model Type:", model_type
 
     #predictions = cross_val_predict(logreg, X, Y, cv=NO_OF_FOLDS)
-    scores1 = cross_val_score(get_model(model_type), X, Y, cv=NO_OF_FOLDS, scoring='precision_weighted')
+    scores1 = cross_validate(get_model(model_type), X, Y, cv=NO_OF_FOLDS, scoring='precision_weighted')
     print "Precision(avg): %0.3f (+/- %0.3f)" % (scores1.mean(), scores1.std() * 2)
 
-    scores2 = cross_val_score(get_model(model_type), X, Y, cv=NO_OF_FOLDS, scoring='recall_weighted')
+    scores2 = cross_validate(get_model(model_type), X, Y, cv=NO_OF_FOLDS, scoring='recall_weighted')
     print "Recall(avg): %0.3f (+/- %0.3f)" % (scores2.mean(), scores2.std() * 2)
     
-    scores3 = cross_val_score(get_model(model_type), X, Y, cv=NO_OF_FOLDS, scoring='f1_weighted')
+    scores3 = cross_validate(get_model(model_type), X, Y, cv=NO_OF_FOLDS, scoring='f1_weighted')
     print "F1-score(avg): %0.3f (+/- %0.3f)" % (scores3.mean(), scores3.std() * 2)
 
 
@@ -131,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument('--kernel', default=KERNEL)
     parser.add_argument('--class_weight')
 
+    # --model=logistic --embeddingfile="/home/mike/Desktop/glove.twitter.27B.200d.txt" --dimension=5 --tokenizer=nltk
 
     args = parser.parse_args()
     MODEL_TYPE = args.model
@@ -149,6 +170,8 @@ if __name__ == "__main__":
 
     print 'GLOVE embedding: %s' %(GLOVE_MODEL_FILE)
     print 'Embedding Dimension: %d' %(EMBEDDING_DIM)
+    #   word2vec_model = gensim.models.Word2Vec.load_word2vec_format(GLOVE_MODEL_FILE)
+
     word2vec_model = gensim.models.KeyedVectors.load_word2vec_format(GLOVE_MODEL_FILE)
 
     #filter_vocab(20000)

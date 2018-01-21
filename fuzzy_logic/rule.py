@@ -27,9 +27,9 @@ tip.view()
 #   * rule1: "If food is poor OR services is poor, then tip will be poor
 #   * rule2: "If service is average, then tip will be average
 #   * rule3: "If service is good OR food is good, then tip will be good
-rule1 = ctrl.Rule(quality['poor'] | service['poor'], tip['poor'])
+rule1 = ctrl.Rule(quality['poor'] & service['poor'], tip['poor'])
 rule2 = ctrl.Rule(service['average'], tip['average'])
-rule3 = ctrl.Rule(service['good'] | quality['good'], tip['good'])
+rule3 = ctrl.Rule(service['good'] & quality['good'], tip['good'])
 
 # Create a new ControlSystem with these rules added
 # Note: it is possible to create an empty ControlSystem() and build it up interactively.

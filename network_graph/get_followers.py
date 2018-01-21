@@ -16,7 +16,7 @@ import tweepy
 pFOLLOWING_DIR = "following"
 pMAX_FRIENDS = 200
 pFRIENDS_OF_FRIENDS_LIMIT = 200
-pTWITTERUSERNAME = "UnboxTherapy"
+pTWITTERUSERNAME = "TED"
 
 #######
 # PARAMETERS END
@@ -49,8 +49,8 @@ api = tweepy.API( auth )
 
 
 def getFollowerIDS(centre, maxDepth=1, currentDepth=0, repList=None):
-    # print 'current depth: %d, max depth: %d' % (current_depth, max_depth)
-    # print 'taboo list: ', ','.join([ str(i) for i in taboo_list ])
+    #print('current depth: %d, max depth: %d' % (currentDepth, maxDepth))
+    #print('taboo list: ', ','.join([ str(i) for i in repList ]))
 
     if repList is None:
         repList = []
@@ -175,6 +175,8 @@ def getFollowerIDS(centre, maxDepth=1, currentDepth=0, repList=None):
 
 
 def main():
+
+
     ap = argparse.ArgumentParser()
     ap.add_argument( "-s", "--screen-name", required=True, help="Screen name of twitter user" )
     ap.add_argument( "-d", "--depth", required=True, type=int, help="How far to follow user network" )

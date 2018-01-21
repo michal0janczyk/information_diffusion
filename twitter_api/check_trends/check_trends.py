@@ -21,9 +21,12 @@ WORLD_WOE_ID = 1
 US_WOE_ID = 23424977
 UK_WOE_ID = 23424975
 
+
 def getHashtags(text, order=False):
+
     tags = set([item.strip("#.,-\"\'&*^!") for item in text.split() if (item.startswith("#") and len(item) < 256)])
     return sorted(tags) if order else tags
+
 
 def main():
 
@@ -31,9 +34,10 @@ def main():
 
     for location in resTrends:
         for trend in location["trends"]:
-            #res.append("%s" % trend["name"])
+            # res.append("%s" % trend["name"])
             result = getHashtags(trend["name"])
             print result
+
 
 if __name__ == '__main__':
     main()

@@ -21,6 +21,8 @@ from collections import defaultdict
 from batch_gen import batch_gen
 from my_tokenizer import glove_tokenize
 import xgboost as xgb
+from data_handler import getData
+
 
 ### Preparing the text data
 texts = []  # list of text samples
@@ -31,7 +33,7 @@ label_map = {
         'racism': 1,
         'sexism': 2
     }
-tweet_data = get_data()
+tweet_data = getData()
 for tweet in tweet_data:
     texts.append(tweet['text'].lower())
     labels.append(label_map[tweet['label']])
@@ -159,7 +161,7 @@ if __name__ == "__main__":
     #filter_vocab(20000)
 
     tweets = select_tweets_whose_embedding_exists()
-    X, Y = gen_data()
+    X, Y = getData()
 
     classification_model(X, Y, MODEL_TYPE)
     pdb.set_trace()

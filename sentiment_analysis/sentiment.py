@@ -18,7 +18,7 @@ import nltk
 import tweet_features
 
 # read all tweets and labels
-fp = open( 'tweets.csv', 'rb' )
+fp = open( '/home/mike/Documents/Data sets/#sentiment/twitter-sentiment-classifier/tweets.csv', 'rb' )
 reader = csv.reader( fp, delimiter=',', quotechar='"', escapechar='\\' )
 tweets = []
 for row in reader:

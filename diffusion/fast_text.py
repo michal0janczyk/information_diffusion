@@ -20,6 +20,7 @@ from batch_gen import batch_gen
 from string import punctuation
 from get_similar_words import get_similar_words
 import sys
+from data_handler import getData
 
 ### Preparing the text data
 texts = []  # list of text samples
@@ -151,7 +152,7 @@ def gen_sequence ():
 
 
 def Tokenize (tweet):
-    # return MyTokenizer.tokenize(tweet)
+    # return MyTokenizer.myTokenize(tweet)
     # pdb.set_trace()
     return tokenizer_g( tweet )
 
