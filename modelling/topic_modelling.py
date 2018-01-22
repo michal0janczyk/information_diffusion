@@ -4,6 +4,8 @@ from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.decomposition import NMF
+
 
 newsgroups_train = fetch_20newsgroups(subset='train')
 print(list(newsgroups_train.target_names))
@@ -39,7 +41,7 @@ for topic_idx, topic in enumerate(lda.components_):
     print("Topic #%d:" % topic_idx)
     print(" ".join([feature_names[i] for i in topic.argsort()[:-20 - 1:-1]]))
 
-from sklearn.decomposition import NMF
+
 
 nmf = NMF(n_components=total_topics, random_state=2017, alpha=.1, l1_ratio=.5)
 nmf.fit(X)

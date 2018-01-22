@@ -5,6 +5,8 @@ from sklearn import metrics
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans, MiniBatchKMeans
 import numpy as np
+from sklearn.naive_bayes import MultinomialNB
+from sklearn import metrics
 
 newsgroups_train = fetch_20newsgroups(subset='train')
 print(list(newsgroups_train.target_names))
@@ -32,9 +34,6 @@ print("Test Dataset")
 print("%d documents" % len(newsgroups_test.data))
 print("%d categories" % len(newsgroups_test.target_names))
 print("n_samples: %d, n_features: %d" % X_test.shape)
-
-from sklearn.naive_bayes import MultinomialNB
-from sklearn import metrics
 
 clf = MultinomialNB()
 clf = clf.fit(X_train, y_train)

@@ -187,12 +187,9 @@ if __name__ == '__main__':
         plot_lda.text(topic_coord[i, 0], topic_coord[i, 1], [topic_summaries[i]])
     hover = plot_lda.select(dict(type=HoverTool))
     hover.tooltips = {"tweet": "@tweet - topic: @topic_key"}
-    from bokeh.plotting import figure, output_file, show
 
-    show(plot_lda)
-
-    #save(plot_lda, 'tsne_lda_viz_{}_{}_{}_{}_{}_{}.html'.format(
-     #   num_qualified_tweet, n_topics, threshold, n_iter, num_example, n_top_words))
+    save(plot_lda, 'tsne_lda_viz_{}_{}_{}_{}_{}_{}.html'.format(
+         num_qualified_tweet, n_topics, threshold, n_iter, num_example, n_top_words))
 
 
     t4 = time.time()
